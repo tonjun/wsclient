@@ -4,12 +4,16 @@ Package wsclient implements a WebSocket client.
 Example:
 
 	ws := wsclient.NewWSClient("ws://localhost:7070/ws")
-	err := ws.Connect()
-	if err != nil {
-		panic(err)
-	}
+
 	ws.OnOpen(func() {
 		fmt.Printf("connection opened")
+		ws.SendJSON(wsclient.M{
+			"type": "chat",
+			"payload": "hello world",
+			"sender": {
+				"name": "Bob",
+			},
+		})
 	})
 	ws.OnMessage(func(data []byte) {
 		fmt.Printf("got message")
@@ -17,13 +21,11 @@ Example:
 	ws.OnClose(func() {
 		fmt.Println("connection closed")
 	})
-	ws.SendJSON(wsclient.M{
-		"type": "chat",
-		"payload": "hello world",
-		"sender": {
-			"name": "Bob",
-		},
+	ws.OnError(func(err error) {
+		panic(err)
 	})
+	ws.Connect()
+
 
 */
 package wsclient
@@ -92,6 +94,7 @@ func (c *WSClient) OnError(fn func(err error)) {
 func (c *WSClient) Connect() {
 	go func() {
 		var err error
+		//log.Printf("wsclient connecting to: %s", c.u)
 		c.ws, _, err = websocket.DefaultDialer.Dial(c.u, nil)
 		if err != nil {
 			fmt.Printf("Connect error: %s", err.Error())
@@ -100,6 +103,7 @@ func (c *WSClient) Connect() {
 			}
 			return
 		}
+		//log.Printf("wsclient connected to: %s", c.u)
 		go c.writePump()
 		go c.readPump()
 
@@ -117,7 +121,7 @@ func (c *WSClient) SendJSON(j M) error {
 		log.Printf("SendJSON: Marshal error: %s", err.Error())
 		return err
 	}
-	log.Printf("Sending: '%s'", string(b))
+	//log.Printf("Sending: '%s'", string(b))
 
 	c.send <- b
 
@@ -190,7 +194,7 @@ func (c *WSClient) write(mt int, payload []byte) error {
 		if mt == websocket.PingMessage {
 			log.Printf("mt: ping")
 		} else {
-			log.Printf("mt: %d write: '%s'", mt, string(payload))
+			//log.Printf("mt: %d write: '%s'", mt, string(payload))
 		}
 	}
 	return c.ws.WriteMessage(mt, payload)
