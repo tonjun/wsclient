@@ -45,3 +45,16 @@ func TestClient(t *testing.T) {
 
 	//time.Sleep(100 * time.Millisecond)
 }
+
+func TestError(t *testing.T) {
+	done := make(chan bool)
+
+	ws := NewWSClient("ws://localhost:8082")
+	ws.OnError(func(err error) {
+		log.Printf("onError: %s", err.Error())
+		done <- true
+	})
+	ws.Connect()
+
+	<-done
+}
