@@ -97,7 +97,7 @@ func (c *WSClient) Connect() {
 		//log.Printf("wsclient connecting to: %s", c.u)
 		c.ws, _, err = websocket.DefaultDialer.Dial(c.u, nil)
 		if err != nil {
-			fmt.Printf("Connect error: %s", err.Error())
+			fmt.Printf("Connect error: %s\n", err.Error())
 			if c.onError != nil {
 				c.onError(err)
 			}
